@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legos to Pick Cilantro — FY26/27 Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f4ee;
+    --paper:#ffffff;
+    --ink:#1d2318;
+    --ink-soft:#5b6350;
+    --ink-faint:#95998a;
+    --rule:#dcd6c6;
+    --cilantro:#3f6b34;
+    --cilantro-deep:#294a22;
+    --cilantro-tint:#e7efe0;
+    --brick:#a8431f;
+    --brick-tint:#f6e4dc;
+    --amber:#b8842a;
+    --amber-tint:#f7ecd7;
+    --shadow: 0 1px 2px rgba(29,35,24,0.06), 0 8px 24px rgba(29,35,24,0.05);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+    padding-bottom:80px;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px;}
+  header.hero{
+    padding:56px 24px 40px;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(63,107,52,0.10), transparent 40%),
+      var(--paper);
+    border-bottom:1px solid var(--rule);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--cilantro-deep);
+    font-weight:600;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-size:clamp(28px,4vw,42px);
+    font-weight:600;
+    margin:8px 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{color:var(--ink-soft);font-size:15px;max-width:640px;}
+  .affirmations{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:28px;
+  }
+  @media (max-width:720px){ .affirmations{grid-template-columns:1fr;} }
+  .aff-card{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:18px 20px;
+  }
+  .aff-card .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--cilantro);
+    letter-spacing:0.1em;
+    font-weight:600;
+  }
+  .aff-card p{margin:6px 0 0;font-size:14.5px;}
+  .cilantro-quote{
+    margin-top:24px;
+    border-left:3px solid var(--cilantro);
+    padding:10px 16px;
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:15px;
+    color:var(--cilantro-deep);
+    background:var(--cilantro-tint);
+    border-radius:0 8px 8px 0;
+  }
+
+  nav.tabs{
+    position:sticky;top:0;z-index:20;
+    background:rgba(246,244,238,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--rule);
+  }
+  nav.tabs .wrap{display:flex;gap:4px;padding:0 24px;align-items:center;}
+  .toolbar-spacer{flex:1;}
+  .storage-mode{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);
+    display:flex;align-items:center;gap:6px;margin-right:8px;
+  }
+  .storage-mode .dot{width:7px;height:7px;border-radius:50%;background:var(--cilantro);}
+  .storage-mode.local .dot{background:var(--amber);}
+  .toolbar-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;
+    background:none;border:1px solid var(--rule);border-radius:6px;
+    padding:6px 10px;cursor:pointer;color:var(--ink-soft);
+  }
+  .toolbar-btn:hover{border-color:var(--cilantro);color:var(--cilantro-deep);}
+  nav.tabs button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:0.04em;
+    background:none;
+    border:none;
+    padding:16px 14px;
+    cursor:pointer;
+    color:var(--ink-faint);
+    border-bottom:2px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  nav.tabs button.active{color:var(--cilantro-deep);border-color:var(--cilantro);}
+  nav.tabs button:hover{color:var(--ink);}
+
+  section.panel{display:none;padding-top:32px;}
+  section.panel.active{display:block;}
+
+  .rail{
+    display:flex;
+    gap:6px;
+    margin:18px 0 32px;
+    overflow-x:auto;
+    padding-bottom:4px;
+  }
+  .rail-node{
+    flex:1;
+    min-width:64px;
+    text-align:center;
+  }
+  .rail-node .dot{
+    width:100%;
+    height:8px;
+    border-radius:5px;
+    background:var(--rule);
+    margin-bottom:6px;
+    transition:background .2s;
+  }
+  .rail-node .dot.on-track{background:var(--cilantro);}
+  .rail-node .dot.partial{background:var(--amber);}
+  .rail-node .dot.overdue{background:var(--brick);}
+  .rail-node .lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);}
+  .rail-node.current .lbl{color:var(--cilantro-deep);font-weight:600;}
+
+  .month-card{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:14px;
+  }
+  .month-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+  .month-head h3{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    font-weight:600;
+    margin:0;
+  }
+  .pct-badge{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:3px 9px;
+    border-radius:20px;
+    background:var(--rule);
+    color:var(--ink-soft);
+    font-weight:600;
+  }
+  .pct-badge.done{background:var(--cilantro-tint);color:var(--cilantro-deep);}
+  .pct-badge.warn{background:var(--brick-tint);color:var(--brick);}
+
+  .checklist{list-style:none;margin:0 0 14px;padding:0;}
+  .checklist li{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:7px 0;
+    border-bottom:1px dashed var(--rule);
+    font-size:14px;
+  }
+  .checklist li:last-child{border-bottom:none;}
+  .checklist input[type=checkbox]{
+    margin-top:3px;
+    width:16px;height:16px;
+    accent-color:var(--cilantro);
+    flex-shrink:0;
+    cursor:pointer;
+  }
+  .checklist label{cursor:pointer;}
+  .checklist li.checked label{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--rule);}
+
+  .body-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  @media (max-width:600px){.body-row{grid-template-columns:1fr;}}
+  .field-block label.field-label{
+    display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin-bottom:5px;
+  }
+  .field-block .target{font-size:13px;color:var(--ink-soft);margin-bottom:4px;}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    padding:8px 10px;
+    border:1px solid var(--rule);
+    border-radius:6px;
+    background:#fbfaf6;
+    color:var(--ink);
+  }
+  textarea{min-height:56px;resize:vertical;font-family:'Inter',sans-serif;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--cilantro);outline-offset:1px;border-color:var(--cilantro);}
+  .notes-wrap{margin-top:10px;}
+  .notes-wrap label.field-label{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-faint);display:block;margin-bottom:5px;
+  }
+
+  .callout{
+    background:var(--amber-tint);
+    border:1px solid #e6cf9f;
+    border-radius:10px;
+    padding:16px 18px;
+    font-size:14px;
+    margin:22px 0;
+  }
+  .callout strong{color:var(--amber);}
+
+  .scorecard-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:680px){.scorecard-grid{grid-template-columns:1fr;}}
+  .score-item{
+    background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;
+  }
+  .score-item .q{font-size:14px;font-weight:600;margin-bottom:8px;}
+  .score-item .hint{font-size:12.5px;color:var(--ink-faint);margin-top:6px;}
+
+  .save-indicator{
+    position:fixed;bottom:18px;right:18px;
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    background:var(--ink);color:var(--bg);
+    padding:8px 14px;border-radius:20px;
+    opacity:0;transition:opacity .3s;
+    box-shadow:var(--shadow);
+  }
+  .save-indicator.show{opacity:1;}
+
+  .share-note{
+    font-size:12.5px;color:var(--ink-faint);
+    border:1px dashed var(--rule);border-radius:8px;
+    padding:10px 14px;margin-bottom:24px;
+  }
+
+  footer.bottom{padding:40px 24px 10px;text-align:center;color:var(--ink-faint);font-size:12.5px;font-family:'IBM Plex Mono',monospace;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">YPO Forum · Aug 2026 → Aug 2027</div>
+    <h1>Building Legos to Pick Cilantro</h1>
+    <p class="subtitle">Two affirmations, twelve monthly checkpoints, one August 2027 scorecard. Trusting myself to build WildBatch on my own definition of success — and a body built for the long run.</p>
+
+    <div class="affirmations">
+      <div class="aff-card">
+        <div class="num">AFFIRMATION 01 — WILDBATCH</div>
+        <p>I am trusting myself to intentionally build WildBatch to achieve <em>my own</em> definition of success — not one handed to me.</p>
+      </div>
+      <div class="aff-card">
+        <div class="num">AFFIRMATION 02 — BODY</div>
+        <p>I am building a robust, pliable, resilient body optimized for long-term health, longevity, and an active life — 145&nbsp;lb / 14%&nbsp;BF.</p>
+      </div>
+    </div>
+
+    <div class="cilantro-quote">"Building WildBatch is the adult version of building legos. Picking cilantro — a good workout, a home-cooked breakfast, walking into my own backyard herb garden — is what wealth actually looks like." The test every month: does the plan still buy that morning?</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="wrap">
+    <button data-panel="wb" class="active">WildBatch</button>
+    <button data-panel="body">Body</button>
+    <button data-panel="scorecard">Aug 2027 Scorecard</button>
+    <div class="toolbar-spacer"></div>
+    <div class="storage-mode" id="storageMode"><span class="dot"></span><span id="storageModeText">checking…</span></div>
+    <button class="toolbar-btn" id="exportBtn">Export backup</button>
+    <button class="toolbar-btn" id="importBtn">Import backup</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none;">
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section id="panel-wb" class="panel active">
+  <div class="share-note">Shared tracker — anyone with this link sees and can update the same checkmarks and notes. Built for you and your forum mates to check in on together each month.</div>
+  <div id="rail-wb" class="rail"></div>
+  <div class="callout"><strong>Reconciliation, in one line:</strong> Auxilium $80K/yr + WB owner comp $220K/yr (2028 target) = $300K net. WB needs to scale from ~$750K (2027 plan) to roughly $1.75–2.5M (2028), via paid acquisition scale + a new channel. August 2027 is a <strong>trajectory checkpoint</strong>, not an arrival — the question is whether the run-rate makes 2028 plausible, not whether $300K has landed yet.</div>
+  <div id="months-wb"></div>
+</section>
+
+<section id="panel-body" class="panel">
+  <div class="share-note">Shared tracker — anyone with this link sees and can update the same entries.</div>
+  <div id="rail-body" class="rail"></div>
+  <div class="callout"><strong>Baseline (measured 8/29/26):</strong> 169.8&nbsp;lb / 22.7% BF → target 145&nbsp;lb / 14% BF (~18.5 lb fat, ~24.8 lb total weight to lose). Glide path below is conservative (~0.4–0.5 lb/week) — sustainable, muscle-preserving pace.</div>
+  <div id="months-body"></div>
+</section>
+
+<section id="panel-scorecard" class="panel">
+  <h2 style="font-family:'Fraunces',serif;font-weight:600;font-size:24px;margin-top:0;">August 2027 Final Scorecard</h2>
+  <p style="color:var(--ink-soft);font-size:14.5px;max-width:640px;">Fill this in at the retreat or forum meeting closest to August 2027. Score honestly — this is the number that tells you whether the affirmation was real or a mood.</p>
+  <div class="scorecard-grid" id="scorecard-grid"></div>
+
+  <div class="callout" style="margin-top:26px;">
+    <strong>The cilantro test.</strong> Whatever the numbers say above — does this still buy the perfect morning: a good workout, breakfast at home, time in the herb garden? If yes, the affirmation held even through a rough quarter. If defending the number required quietly redefining what a good life looks like, that's worth naming honestly here.
+  </div>
+  <div class="notes-wrap" style="margin-top:14px;">
+    <label class="field-label">Final reflection</label>
+    <textarea id="final-reflection" data-key="final_reflection" style="min-height:100px;"></textarea>
+  </div>
+</section>
+
+</div>
+
+<footer class="bottom">LEGOS TO PICK CILANTRO — FY26/27 TRACKER — DATA SAVES AUTOMATICALLY</footer>
+<div class="save-indicator" id="saveIndicator">Saved</div>
+
+<script>
+const STORAGE_KEY = 'wb-affirmation-tracker-v1';
+let STATE = {};
+let saveTimer = null;
+const HAS_CLOUD = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+
+async function storageGet(key, shared){
+  if(HAS_CLOUD){
+    try{ return await window.storage.get(key, shared); }
+    catch(e){ return null; }
+  }
+  try{
+    const raw = window.localStorage.getItem(key);
+    return raw ? {key, value: raw, shared} : null;
+  }catch(e){ return null; }
+}
+async function storageSet(key, value, shared){
+  if(HAS_CLOUD){
+    try{ return await window.storage.set(key, value, shared); }
+    catch(e){ return null; }
+  }
+  try{
+    window.localStorage.setItem(key, value);
+    return {key, value, shared};
+  }catch(e){ return null; }
+}
+
+const WB_MONTHS = [
+  {y:2026,m:8,label:'Sep 2026', items:[
+    'Reopen/expand raise: deck updated, 15–20 investor conversations targeting the remaining $285K',
+    'Auxilium scope + comp locked in writing with Zak by 9/30',
+    "Aimee's resume live, applying (5/wk target)",
+    'Refill pouches confirmed LIVE; baseline WB run-rate captured',
+    'Klaviyo refill retention sequence launched'
+  ]},
+  {y:2026,m:9,label:'Oct 2026', items:[
+    'Track $ committed vs. $285K needed, weekly',
+    'Auxilium onboarding/ramp underway if signed',
+    "Aimee interviewing, targeting an offer",
+    'Revenue at ~12–15% of $200K annual goal (cumulative)',
+    "Aimee employed by 10/31 — hard deadline check"
+  ]},
+  {y:2026,m:10,label:'Nov 2026', items:[
+    '50%+ of the $285K committed or in signed docs',
+    'Q4 ramp (BFCM) — target 20–25% cumulative of $200K goal',
+    'Ad spend efficiency review (Make.com alerts live)',
+    'If <50% committed by 11/30 — escalate outreach immediately'
+  ]},
+  {y:2026,m:11,label:'Dec 2026', items:[
+    'Close remaining $285K → $500K total raised',
+    'Cumulative revenue ~40–45% of $200K goal (holiday-weighted)',
+    '2026 revenue finalized — did WB hit $200K?',
+    'Hard checkpoint: raise closed Y/N — if N, decide extend vs. reset'
+  ]},
+  {y:2027,m:0,label:'Jan 2027', items:[
+    'Deploy raised capital per use-of-funds plan',
+    'Set the monthly run-rate needed for $750K in 2027',
+    "Confirm full-time WB involvement + 20 flex-hr/wk Auxilium pace is holding",
+    'Begin CAC ceiling analysis (paid acquisition lever)'
+  ]},
+  {y:2027,m:1,label:'Feb 2027', items:[
+    'On-pace check: cumulative revenue vs. $750K curve',
+    'New channel candidate selected (wholesale / retail / marketplace / other)',
+    'CAC ceiling analysis complete — max sustainable spend level defined'
+  ]},
+  {y:2027,m:2,label:'Mar 2027', items:[
+    'Q1 close: hit or miss vs. plan',
+    'Margin check — tracking toward 10% net?',
+    'Quarterly YPO deep-dive: is WB still the right bet given actuals?'
+  ]},
+  {y:2027,m:3,label:'Apr 2027', items:[
+    'New channel pilot live (first orders/shelf placement/listings)',
+    'Paid acquisition scaled toward defined CAC ceiling',
+    'Revenue trend check vs. $750K pace'
+  ]},
+  {y:2027,m:4,label:'May 2027', items:[
+    'New channel traction check — renew, expand, or cut',
+    'Refill retention rate holding at 45–60 day cycle assumption?'
+  ]},
+  {y:2027,m:5,label:'Jun 2027', items:[
+    'Q2 close — cumulative ~45–50% of $750K',
+    'Mid-year formal review: income actuals vs. targets, full honesty pass',
+    'Is the ~60hr/week pace (WB + Auxilium) still sustainable?'
+  ]},
+  {y:2027,m:6,label:'Jul 2027', items:[
+    'Final push adjustments on any lagging channel/lever',
+    'Pre-checkpoint gut check ahead of August scorecard'
+  ]},
+  {y:2027,m:7,label:'Aug 2027', items:[
+    'Affirmation checkpoint — trajectory, not arrival, is the test',
+    'Run-rate confirms a plausible path to $1.75–2.5M in 2028?',
+    'Net margin trending toward 10%?',
+    'Complete the full scorecard tab'
+  ]},
+];
+
+const BODY_MONTHS = [
+  {y:2026,m:7,label:'Aug 2026', target:'169.8 / 22.7% (baseline, measured 8/29/26)', items:['Baseline measurement recorded — 169.8 lb / 22.7% BF','Training program selected, 4x/week on calendar']},
+  {y:2026,m:8,label:'Sep 2026', target:'~167.7 / ~22.0%', items:['Protein target set (≥1g/lb target bodyweight), tracked 5+ days/wk']},
+  {y:2026,m:9,label:'Oct 2026', target:'~165.7 / ~21.3%', items:['Strength benchmark #1 recorded (3 lifts)']},
+  {y:2026,m:10,label:'Nov 2026', target:'~163.6 / ~20.5%', items:['Holiday adherence check — did travel/social season break the routine?']},
+  {y:2026,m:11,label:'Dec 2026', target:'~161.5 / ~19.8% (quarterly scan #2)', items:['Reassess program based on Q4 actuals']},
+  {y:2027,m:0,label:'Jan 2027', target:'~159.5 / ~19.1%', items:['Strength benchmark #2 recorded']},
+  {y:2027,m:1,label:'Feb 2027', target:'~157.4 / ~18.4%', items:['Cumulative trend check vs. glide path — ahead, on, or behind?']},
+  {y:2027,m:2,label:'Mar 2027', target:'~155.3 / ~17.6% (quarterly scan #3)', items:['No specific milestone — hold consistency']},
+  {y:2027,m:3,label:'Apr 2027', target:'~153.3 / ~16.9%', items:['Strength benchmark #3 recorded']},
+  {y:2027,m:4,label:'May 2027', target:'~151.2 / ~16.2%', items:['Halfway-to-deadline gut check: on pace or not']},
+  {y:2027,m:5,label:'Jun 2027', target:'~149.1 / ~15.5% (quarterly scan #4)', items:['Final push adjustments if behind pace']},
+  {y:2027,m:6,label:'Jul 2027', target:'~147.1 / ~14.7%', items:['Pre-final-scan check — last month to close the gap']},
+  {y:2027,m:7,label:'Aug 2027', target:'145 / 14% — final scan', items:['Final scan completed','Scorecard: hit / missed by ___ lb / ___ %']},
+];
+
+const SCORECARD_FIELDS = [
+  {id:'sc_raise', q:'Raised the full $500K?', type:'yn'},
+  {id:'sc_raise_actual', q:'Actual amount raised ($)', type:'text', placeholder:'e.g. 500000'},
+  {id:'sc_aux', q:'Auxilium $80K/yr realized?', type:'yn'},
+  {id:'sc_aimee', q:"Aimee's $40K/yr realized?", type:'yn'},
+  {id:'sc_rev26', q:'2026 revenue — actual ($)', type:'text', placeholder:'target: $200,000'},
+  {id:'sc_rev27_pace', q:'2027 revenue on pace for $750K @ 10% margin?', type:'yn'},
+  {id:'sc_income_total', q:'Total personal income realized over the 12 months ($)', type:'text', placeholder:'baseline: $130,000'},
+  {id:'sc_2028_ready', q:'2028 readiness: is the mechanism (paid scale + new channel) actually working, not just defined?', type:'yn'},
+  {id:'sc_channel_notes', q:'What actually drove growth — did the plan hold?', type:'textarea'},
+  {id:'sc_weight_actual', q:'Final weight (lb)', type:'text', placeholder:'target: 145'},
+  {id:'sc_bf_actual', q:'Final body fat %', type:'text', placeholder:'target: 14%'},
+  {id:'sc_body_hit', q:'Hit the 145/14% target?', type:'yn'},
+];
+
+function monthKey(sec, idx){ return sec+'_m'+idx; }
+
+function computeCompletion(sec, months, idx){
+  const key = monthKey(sec, idx);
+  const st = STATE[key] || {};
+  const total = months[idx].items.length;
+  let checked = 0;
+  for(let i=0;i<total;i++){ if(st['item'+i]) checked++; }
+  return total ? Math.round((checked/total)*100) : 0;
+}
+
+function isOverdue(y,m,pct){
+  const due = new Date(y, m+1, 0, 23,59,59);
+  return (new Date() > due) && pct < 100;
+}
+function isCurrent(y,m){
+  const now = new Date();
+  return now.getFullYear()===y && now.getMonth()===m;
+}
+
+function renderRail(sec, months){
+  const el = document.getElementById('rail-'+sec);
+  el.innerHTML = '';
+  months.forEach((mo, idx)=>{
+    const pct = computeCompletion(sec, months, idx);
+    const overdue = isOverdue(mo.y, mo.m, pct);
+    const current = isCurrent(mo.y, mo.m);
+    let cls = '';
+    if(pct===100) cls='on-track';
+    else if(overdue) cls='overdue';
+    else if(pct>0) cls='partial';
+    const node = document.createElement('div');
+    node.className = 'rail-node'+(current?' current':'');
+    node.innerHTML = '<div class="dot '+cls+'"></div><div class="lbl">'+mo.label.split(' ')[0]+'</div>';
+    el.appendChild(node);
+  });
+}
+
+function renderMonths(sec, months, container){
+  const wrap = document.getElementById(container);
+  wrap.innerHTML = '';
+  months.forEach((mo, idx)=>{
+    const key = monthKey(sec, idx);
+    const st = STATE[key] || {};
+    const pct = computeCompletion(sec, months, idx);
+    const overdue = isOverdue(mo.y, mo.m, pct);
+
+    const card = document.createElement('div');
+    card.className = 'month-card';
+
+    let badgeClass = '';
+    if(pct===100) badgeClass='done';
+    else if(overdue) badgeClass='warn';
+
+    let html = '<div class="month-head"><h3>'+mo.label+'</h3><span class="pct-badge '+badgeClass+'">'+pct+'% complete'+(overdue?' · overdue':'')+'</span></div>';
+
+    if(mo.target){
+      html += '<div class="target">Target: <strong>'+mo.target+'</strong></div>';
+      html += '<div class="body-row" style="margin-top:8px;">'+
+        '<div class="field-block"><label class="field-label">Actual weight (lb)</label><input type="text" data-key="'+key+'.weight" value="'+(st.weight||'')+'"></div>'+
+        '<div class="field-block"><label class="field-label">Actual BF%</label><input type="text" data-key="'+key+'.bf" value="'+(st.bf||'')+'"></div>'+
+      '</div>';
+    }
+
+    html += '<ul class="checklist">';
+    mo.items.forEach((item, i)=>{
+      const checked = !!st['item'+i];
+      html += '<li class="'+(checked?'checked':'')+'">'+
+        '<input type="checkbox" id="'+key+'_item'+i+'" data-key="'+key+'.item'+i+'" '+(checked?'checked':'')+'>'+
+        '<label for="'+key+'_item'+i+'">'+item+'</label></li>';
+    });
+    html += '</ul>';
+
+    html += '<div class="notes-wrap"><label class="field-label">Notes</label><textarea data-key="'+key+'.notes">'+(st.notes||'')+'</textarea></div>';
+
+    card.innerHTML = html;
+    wrap.appendChild(card);
+  });
+
+  wrap.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', onFieldChange);
+  });
+  wrap.querySelectorAll('input[type=text], textarea').forEach(f=>{
+    f.addEventListener('change', onFieldChange);
+  });
+}
+
+function renderScorecard(){
+  const grid = document.getElementById('scorecard-grid');
+  grid.innerHTML = '';
+  SCORECARD_FIELDS.forEach(f=>{
+    const val = STATE[f.id] || '';
+    const item = document.createElement('div');
+    item.className = 'score-item';
+    let inner = '<div class="q">'+f.q+'</div>';
+    if(f.type==='yn'){
+      inner += '<select data-key="'+f.id+'">'+
+        '<option value="">— select —</option>'+
+        '<option value="Y" '+(val==='Y'?'selected':'')+'>Yes</option>'+
+        '<option value="N" '+(val==='N'?'selected':'')+'>No</option>'+
+        '<option value="Partial" '+(val==='Partial'?'selected':'')+'>Partially</option>'+
+      '</select>';
+    } else if(f.type==='textarea'){
+      inner += '<textarea data-key="'+f.id+'">'+val+'</textarea>';
+    } else {
+      inner += '<input type="text" data-key="'+f.id+'" value="'+val+'" placeholder="'+(f.placeholder||'')+'">';
+    }
+    item.innerHTML = inner;
+    grid.appendChild(item);
+  });
+  grid.querySelectorAll('select, input, textarea').forEach(f=>{
+    f.addEventListener('change', onFieldChange);
+  });
+
+  const reflection = document.getElementById('final-reflection');
+  reflection.value = STATE['final_reflection'] || '';
+  reflection.addEventListener('change', onFieldChange);
+}
+
+function onFieldChange(e){
+  const key = e.target.getAttribute('data-key');
+  let value;
+  if(e.target.type==='checkbox') value = e.target.checked;
+  else value = e.target.value;
+
+  if(key.indexOf('.') > -1){
+    const [group, field] = key.split('.');
+    STATE[group] = STATE[group] || {};
+    STATE[group][field] = value;
+  } else {
+    STATE[key] = value;
+  }
+
+  // re-render affected month card list to update badges/checked styling
+  if(key.indexOf('wb_m')===0){ renderMonths('wb', WB_MONTHS, 'months-wb'); renderRail('wb', WB_MONTHS); }
+  else if(key.indexOf('body_m')===0){ renderMonths('body', BODY_MONTHS, 'months-body'); renderRail('body', BODY_MONTHS); }
+
+  scheduleSave();
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 500);
+}
+
+async function saveState(){
+  try{
+    await storageSet(STORAGE_KEY, JSON.stringify(STATE), true);
+    flashSaved();
+  }catch(err){
+    console.error('Save failed', err);
+  }
+}
+
+function flashSaved(){
+  const el = document.getElementById('saveIndicator');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 1200);
+}
+
+async function loadState(){
+  try{
+    const res = await storageGet(STORAGE_KEY, true);
+    STATE = res && res.value ? JSON.parse(res.value) : {};
+  }catch(err){
+    STATE = {};
+  }
+  const modeEl = document.getElementById('storageMode');
+  const modeText = document.getElementById('storageModeText');
+  if(HAS_CLOUD){
+    modeText.textContent = 'synced — shared with anyone on this link';
+  } else {
+    modeEl.classList.add('local');
+    modeText.textContent = 'saved to this browser only — use Export/Import to share';
+  }
+  renderRail('wb', WB_MONTHS);
+  renderMonths('wb', WB_MONTHS, 'months-wb');
+  renderRail('body', BODY_MONTHS);
+  renderMonths('body', BODY_MONTHS, 'months-body');
+  renderScorecard();
+}
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(STATE, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'wildbatch-tracker-backup-'+stamp+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importBtn').addEventListener('click', ()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt)=>{
+    try{
+      const imported = JSON.parse(evt.target.result);
+      STATE = imported;
+      await saveState();
+      renderRail('wb', WB_MONTHS); renderMonths('wb', WB_MONTHS, 'months-wb');
+      renderRail('body', BODY_MONTHS); renderMonths('body', BODY_MONTHS, 'months-body');
+      renderScorecard();
+      alert('Backup imported and saved.');
+    }catch(err){
+      alert('Could not read that file — make sure it is a backup exported from this tracker.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('section.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.getAttribute('data-panel')).classList.add('active');
+  });
+});
+
+loadState();
+</script>
+</body>
+</html>
