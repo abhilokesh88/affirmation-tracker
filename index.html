@@ -6,6 +6,7 @@
 <title>Legos to Pick Cilantro — FY26/27 Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#f6f4ee;
@@ -345,25 +346,71 @@ let STATE = {};
 let saveTimer = null;
 const HAS_CLOUD = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
 
+// ── SUPABASE CONFIG ──────────────────────────────────────────────
+// Replace these two values after creating your Supabase project.
+// See setup instructions provided alongside this file.
+const SUPABASE_URL = 'https://qtkzmucbmakkthqupoth.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0a3ptdWNibWFra3RocXVwb3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwMjM0NzgsImV4cCI6MjEwMzU5OTQ3OH0.1JqoSN8Vl6oIoDo5wltIThI1Y5-wsm4OHw8whjJsseQ';
+// ─────────────────────────────────────────────────────────────────
+
+let supabaseClient = null;
+const SUPABASE_CONFIGURED = SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL'
+  && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY'
+  && typeof window.supabase !== 'undefined';
+if(SUPABASE_CONFIGURED){
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
 async function storageGet(key, shared){
+  if(supabaseClient){
+    try{
+      const { data, error } = await supabaseClient.from('tracker_data').select('value').eq('id', key).maybeSingle();
+      if(error) throw error;
+      return data ? {key, value: JSON.stringify(data.value), shared} : null;
+    }catch(e){ console.error('Supabase get failed, falling back', e); }
+  }
   if(HAS_CLOUD){
     try{ return await window.storage.get(key, shared); }
-    catch(e){ return null; }
+    catch(e){ /* fall through */ }
   }
   try{
     const raw = window.localStorage.getItem(key);
     return raw ? {key, value: raw, shared} : null;
   }catch(e){ return null; }
 }
+
 async function storageSet(key, value, shared){
+  if(supabaseClient){
+    try{
+      const parsed = JSON.parse(value);
+      const { error } = await supabaseClient.from('tracker_data').upsert({ id: key, value: parsed, updated_at: new Date().toISOString() });
+      if(error) throw error;
+      return {key, value, shared};
+    }catch(e){ console.error('Supabase set failed, falling back', e); }
+  }
   if(HAS_CLOUD){
     try{ return await window.storage.set(key, value, shared); }
-    catch(e){ return null; }
+    catch(e){ /* fall through */ }
   }
   try{
     window.localStorage.setItem(key, value);
     return {key, value, shared};
   }catch(e){ return null; }
+}
+
+function subscribeRealtime(){
+  if(!supabaseClient) return;
+  supabaseClient.channel('tracker-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tracker_data', filter: 'id=eq.'+STORAGE_KEY }, (payload) => {
+      if(payload.new && payload.new.value){
+        STATE = payload.new.value;
+        renderRail('wb', WB_MONTHS); renderMonths('wb', WB_MONTHS, 'months-wb');
+        renderRail('body', BODY_MONTHS); renderMonths('body', BODY_MONTHS, 'months-body');
+        renderScorecard();
+        flashSaved('Updated by someone else');
+      }
+    })
+    .subscribe();
 }
 
 const WB_MONTHS = [
@@ -620,10 +667,11 @@ async function saveState(){
   }
 }
 
-function flashSaved(){
+function flashSaved(msg){
   const el = document.getElementById('saveIndicator');
+  el.textContent = msg || 'Saved';
   el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 1200);
+  setTimeout(()=>{ el.classList.remove('show'); el.textContent='Saved'; }, 1600);
 }
 
 async function loadState(){
@@ -635,7 +683,9 @@ async function loadState(){
   }
   const modeEl = document.getElementById('storageMode');
   const modeText = document.getElementById('storageModeText');
-  if(HAS_CLOUD){
+  if(supabaseClient){
+    modeText.textContent = 'live sync — shared in real time with anyone on this link';
+  } else if(HAS_CLOUD){
     modeText.textContent = 'synced — shared with anyone on this link';
   } else {
     modeEl.classList.add('local');
@@ -646,6 +696,7 @@ async function loadState(){
   renderRail('body', BODY_MONTHS);
   renderMonths('body', BODY_MONTHS, 'months-body');
   renderScorecard();
+  subscribeRealtime();
 }
 
 document.getElementById('exportBtn').addEventListener('click', ()=>{
