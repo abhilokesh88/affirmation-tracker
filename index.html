@@ -361,13 +361,38 @@ if(SUPABASE_CONFIGURED){
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
+// Tracks whether the database is actually reachable, so the page can say so honestly.
+let SYNC_OK = true;        // last database call succeeded
+let LOAD_OK = false;       // we have successfully read from the database at least once
+let LAST_SYNC_ERROR = '';
+
+function renderSyncStatus(){
+  const modeEl = document.getElementById('storageMode');
+  const modeText = document.getElementById('storageModeText');
+  if(!modeEl || !modeText || !supabaseClient) return;
+  if(SYNC_OK){
+    modeEl.classList.remove('local');
+    modeEl.style.color = '';
+    modeText.textContent = 'live sync — shared in real time with anyone on this link';
+  } else {
+    modeEl.classList.add('local');
+    modeEl.style.color = 'var(--brick)';
+    modeText.textContent = '⚠ can’t reach the database — changes are NOT being shared right now' + (LAST_SYNC_ERROR ? ' ('+LAST_SYNC_ERROR+')' : '');
+  }
+}
+
 async function storageGet(key, shared){
   if(supabaseClient){
     try{
       const { data, error } = await supabaseClient.from('tracker_data').select('value').eq('id', key).maybeSingle();
       if(error) throw error;
+      SYNC_OK = true; LOAD_OK = true; LAST_SYNC_ERROR = ''; renderSyncStatus();
       return data ? {key, value: JSON.stringify(data.value), shared} : null;
-    }catch(e){ console.error('Supabase get failed, falling back', e); }
+    }catch(e){
+      console.error('Supabase get failed, falling back', e);
+      SYNC_OK = false; LAST_SYNC_ERROR = (e && (e.message || e.code)) ? String(e.message || e.code).slice(0,80) : 'unknown error';
+      renderSyncStatus();
+    }
   }
   if(HAS_CLOUD){
     try{ return await window.storage.get(key, shared); }
@@ -380,13 +405,22 @@ async function storageGet(key, shared){
 }
 
 async function storageSet(key, value, shared){
-  if(supabaseClient){
+  // Never push to the database before we've successfully read it once:
+  // otherwise a blank page could overwrite real saved data.
+  if(supabaseClient && LOAD_OK){
     try{
       const parsed = JSON.parse(value);
       const { error } = await supabaseClient.from('tracker_data').upsert({ id: key, value: parsed, updated_at: new Date().toISOString() });
       if(error) throw error;
+      SYNC_OK = true; LAST_SYNC_ERROR = ''; renderSyncStatus();
       return {key, value, shared};
-    }catch(e){ console.error('Supabase set failed, falling back', e); }
+    }catch(e){
+      console.error('Supabase set failed, falling back', e);
+      SYNC_OK = false; LAST_SYNC_ERROR = (e && (e.message || e.code)) ? String(e.message || e.code).slice(0,80) : 'unknown error';
+      renderSyncStatus();
+    }
+  } else if(supabaseClient && !LOAD_OK){
+    SYNC_OK = false; renderSyncStatus();
   }
   if(HAS_CLOUD){
     try{ return await window.storage.set(key, value, shared); }
@@ -398,8 +432,10 @@ async function storageSet(key, value, shared){
   }catch(e){ return null; }
 }
 
+let REALTIME_SUBSCRIBED = false;
 function subscribeRealtime(){
-  if(!supabaseClient) return;
+  if(!supabaseClient || REALTIME_SUBSCRIBED) return;
+  REALTIME_SUBSCRIBED = true;
   supabaseClient.channel('tracker-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tracker_data', filter: 'id=eq.'+STORAGE_KEY }, (payload) => {
       if(payload.new && payload.new.value){
@@ -684,7 +720,22 @@ async function loadState(){
   const modeEl = document.getElementById('storageMode');
   const modeText = document.getElementById('storageModeText');
   if(supabaseClient){
-    modeText.textContent = 'live sync — shared in real time with anyone on this link';
+    renderSyncStatus();
+    if(!LOAD_OK){
+      // Database unreachable on first load (e.g. paused free-tier project). Keep retrying quietly.
+      const retry = setInterval(async ()=>{
+        const r = await storageGet(STORAGE_KEY, true);
+        if(LOAD_OK){
+          clearInterval(retry);
+          STATE = r && r.value ? JSON.parse(r.value) : STATE;
+          renderRail('wb', WB_MONTHS); renderMonths('wb', WB_MONTHS, 'months-wb');
+          renderRail('body', BODY_MONTHS); renderMonths('body', BODY_MONTHS, 'months-body');
+          renderScorecard();
+          subscribeRealtime();
+          flashSaved('Reconnected');
+        }
+      }, 15000);
+    }
   } else if(HAS_CLOUD){
     modeText.textContent = 'synced — shared with anyone on this link';
   } else {
