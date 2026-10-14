@@ -1,0 +1,21 @@
+name: Supabase keep-alive
+
+# Pings the tracker's Supabase database every 3 days so the free-tier
+# project never hits the 7-day inactivity pause.
+on:
+  schedule:
+    - cron: "0 12 */3 * *"
+  workflow_dispatch: {}   # lets you run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one row from tracker_data
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            "https://qtkzmucbmakkthqupoth.supabase.co/rest/v1/tracker_data?select=id&limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0a3ptdWNibWFra3RocXVwb3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwMjM0NzgsImV4cCI6MjEwMzU5OTQ3OH0.1JqoSN8Vl6oIoDo5wltIThI1Y5-wsm4OHw8whjJsseQ" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0a3ptdWNibWFra3RocXVwb3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwMjM0NzgsImV4cCI6MjEwMzU5OTQ3OH0.1JqoSN8Vl6oIoDo5wltIThI1Y5-wsm4OHw8whjJsseQ"
+          echo
+          echo "Supabase responded OK"
